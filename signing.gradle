@@ -1,0 +1,28 @@
+def kFile = rootProject.file('local.properties')
+def props = new Properties()
+def hasProps = false
+if (kFile.canRead()) {
+    props.load(new FileInputStream(kFile))
+    if (props.containsKey('SIGN_KEY_STORE_FILE')) {
+        hasProps = true
+    }
+}
+
+if (hasProps) {
+    android.signingConfigs.sign.storeFile = file(props['SIGN_KEY_STORE_FILE'])
+    android.signingConfigs.sign.storePassword = props['SIGN_KEY_STORE_PASSWORD']
+    android.signingConfigs.sign.keyAlias = props['SIGN_KEY_ALIAS']
+    android.signingConfigs.sign.keyPassword = props['SIGN_KEY_PASSWORD']
+} else {
+    def envFile = System.getenv('SIGN_KEY_STORE_FILE')
+    if (envFile != null) {
+        android.signingConfigs.sign.storeFile = file(envFile)
+        android.signingConfigs.sign.storePassword = System.getenv('SIGN_KEY_STORE_PASSWORD')
+        android.signingConfigs.sign.keyAlias = System.getenv('SIGN_KEY_ALIAS')
+        android.signingConfigs.sign.keyPassword = System.getenv('SIGN_KEY_PASSWORD')
+    } else {
+        // Fallback: use built-in debug signing configuration for both debug and release builds.
+        android.buildTypes.debug.signingConfig = android.signingConfigs.debug
+        android.buildTypes.release.signingConfig = android.signingConfigs.debug
+    }
+}
